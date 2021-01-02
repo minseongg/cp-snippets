@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -53,7 +54,27 @@ vvi scc(int v, vvi &e) {
     return ans;
 }
 
-int two_sat(int v, vector<pair<int, int>> clauses) {
+void topological_sort_dfs(int now, vvi &e, vi &visited, vi &order) {
+    visited[now] = 1;
+    for (int &to : e[now]) {
+        if (visited[to]) { continue; }
+        topological_sort_dfs(to, e, visited, order);
+    }
+    order.emplace_back(now);
+}
+
+vi topological_sort(int v, vvi &e) {
+    vi visited(v), order;
+    for (int i = 0; i < v; i++) {
+        if (!visited[i]) {
+            topological_sort_dfs(i, e, visited, order);
+        }
+    }
+    reverse(order.begin(), order.end());
+    return order;
+}
+
+pair<int, vi> two_sat(int v, vector<pair<int, int>> clauses) {
     vvi e(v << 1);
     for (auto &[ v1, v2 ] : clauses) {
         int mod_v1 = (v1 < 0 ? -v1 - 1 + v : v1 - 1);
@@ -70,14 +91,30 @@ int two_sat(int v, vector<pair<int, int>> clauses) {
     }
     for (int x = 0; x < v; x++) {
         if (comp_map[x] == comp_map[x + v]) {
-            return 0;
+            return { 0, { } };
         }
     }
-    return 1;
+    vvi comp_e((int)comps.size());
+    for (int x = 0; x < (v << 1); x++) {
+        for (int &y : e[x]) {
+            if (comp_map[x] == comp_map[y]) { continue; }
+            comp_e[comp_map[x]].emplace_back(comp_map[y]);
+        }
+    }
+    vi order = topological_sort((int)comps.size(), comp_e), visited(v), ans(v);
+    reverse(order.begin(), order.end());
+    for (int &i : order) {
+        if (visited[comps[i][0] % v]) { continue; }
+        for (int &x : comps[i]) {
+            visited[x % v] = 1;
+            ans[x % v] = (x < v ? 1 : 0);
+        }
+    }
+    return { 1, ans };
 }
 
 int main() {
-    // 3 4
+    // 3 variables, 4 clauses
     // -1 2
     // -2 3
     // 1 3
@@ -88,6 +125,12 @@ int main() {
     clauses.emplace_back(1, 3);
     clauses.emplace_back(3, 2);
 
-    int is_avail = two_sat(3, clauses);
+    auto [ is_avail, ans ] = two_sat(3, clauses);
     cout << is_avail << "\n";
+    if (is_avail) {
+        for (auto &x : ans) {
+            cout << x << " ";
+        }
+        cout << "\n";
+    }
 }
