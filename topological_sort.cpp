@@ -1,35 +1,30 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
 using vi = vector<int>;
 using vvi = vector<vi>;
 
+void topological_sort_dfs(int now, vvi &e, vi &visited, vi &order) {
+    visited[now] = 1;
+    for (int &to : e[now]) {
+        if (visited[to]) { continue; }
+        topological_sort_dfs(to, e, visited, order);
+    }
+    order.emplace_back(now);
+}
+
 vi topological_sort(int v, vvi &e) {
-    vi ans, in(v);
-    for (int x = 0; x < v; x++) {
-        for (int &y : e[x]) {
-            in[y]++;
-        }
-    }
-
-    for (int x = 0; x < v; x++) {
-        if (!in[x]) {
-            ans.emplace_back(x);
-        }
-    }
-
+    vi visited(v), order;
     for (int i = 0; i < v; i++) {
-        int x = ans[i];
-        for (int &y : e[x]) {
-            in[y]--;
-            if (!in[y]) {
-                ans.emplace_back(y);
-            }
+        if (!visited[i]) {
+            topological_sort_dfs(i, e, visited, order);
         }
     }
-    return ans;
+    reverse(order.begin(), order.end());
+    return order;
 }
 
 int main() {
