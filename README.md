@@ -31,3 +31,9 @@ __Tree__
 - Segment Tree
 - Segment Tree with lazy propagation
 
+### Run
+
+```sh
+$ g++ ${algorithm_name}.cpp -o main -std=c++17
+$ ./main
+```
